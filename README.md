@@ -3,13 +3,19 @@
 A Chrome extension that reframes GitHub's "request changes" review from something alarming into
 something helpful.
 
-<img src="docs/timeline-review.png" alt="A 'requested changes' review in the PR timeline, shown with a blue lightbulb badge instead of a red one" width="640">
+## Screenshots
+
+Sidebar:
 
 <img src="docs/reviewers-sidebar.png" alt="The Reviewers sidebar showing a blue lightbulb next to a reviewer who requested changes" width="345">
 
+Timeline:
+
+<img src="docs/timeline-review.png" alt="A 'requested changes' review in the PR timeline, shown with a blue lightbulb badge instead of a red one" width="640">
+
 - **Calm blue lightbulb.** The red "requested changes" icon in the PR timeline, the Reviewers
   sidebar, and the merge box becomes a blue lightbulb, using GitHub's own accent colors so it
-  follows your light/dark theme. Red X's for failing CI checks are left alone.
+  follows your light/dark theme.
 - **Hide "Comment" (optional).** A checkbox in the toolbar popup hides the "Comment" choice when
   submitting a review. Because GitHub's classic form pre-selects "Comment", the extension blocks a
   submit while that hidden choice is still selected and asks you to pick Approve or Request
