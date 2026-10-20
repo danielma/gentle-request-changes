@@ -1,0 +1,20 @@
+/* GitHub's own accent tokens, so the blue follows light/dark/high-contrast themes. */
+:root {
+  --grc-blue: var(--fgColor-accent, #0969da);
+  --grc-blue-emphasis: var(--bgColor-accent-emphasis, #0969da);
+  --grc-on-blue: var(--fgColor-onEmphasis, #ffffff);
+}
+
+svg[data-grc-icon] {
+  color: var(--grc-blue) !important;
+  fill: currentColor !important;
+}
+
+[data-grc-badge] {
+  background-color: var(--grc-blue-emphasis) !important;
+  border-color: transparent !important;
+}
+
+[data-grc-badge] svg[data-grc-icon] {
+  color: var(--grc-on-blue) !important;
+}

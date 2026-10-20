@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Gentle Request Changes",
+  "version": "0.1.0",
+  "description": "Turns GitHub's red “request changes” marker into a calm blue lightbulb, and can hide the “Comment” review option.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["src/content.js"],
+      "css": ["src/content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
