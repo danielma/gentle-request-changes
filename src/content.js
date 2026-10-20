@@ -109,6 +109,95 @@ function softenRequestChangesIcons() {
   });
 }
 
+const SETTINGS_DEFAULTS = { hideCommentOption: false };
+let settings = { ...SETTINGS_DEFAULTS };
+
+function labelText(input) {
+  const label = input.labels && input.labels[0];
+  const text = label ? label.textContent : input.getAttribute("aria-label") || "";
+  return text.trim();
+}
+
+function radioGroup(input) {
+  const scope = input.closest('fieldset, [role="radiogroup"], form, [role="dialog"]') || document;
+  const radios = [...scope.querySelectorAll('input[type="radio"]')];
+  return input.name ? radios.filter((radio) => radio.name === input.name) : radios;
+}
+
+// Works for both the classic form (value="comment" / "reject") and the React
+// review dialog, which we can only recognize by its labels.
+function isCommentReviewOption(input) {
+  const isComment = /^comment$/i.test(input.value) || /^comment\b/i.test(labelText(input));
+  const isReviewGroup = radioGroup(input).some(
+    (radio) => /^(reject|request_changes)$/i.test(radio.value) || REQUEST_CHANGES_TEXT.test(labelText(radio)),
+  );
+  return isComment && isReviewGroup;
+}
+
+// The largest wrapper that holds this radio and no sibling option, so the
+// description text and spacing disappear along with the input.
+function optionContainer(input) {
+  let container = input;
+  while (container.parentElement && container.parentElement.querySelectorAll('input[type="radio"]').length === 1) {
+    container = container.parentElement;
+  }
+  return container;
+}
+
+function applyCommentVisibility() {
+  document.querySelectorAll('input[type="radio"]').forEach((input) => {
+    if (isCommentReviewOption(input)) {
+      input.setAttribute("data-grc-comment-option", "");
+      optionContainer(input).toggleAttribute("data-grc-hidden", settings.hideCommentOption);
+    }
+  });
+}
+
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "grc-toast";
+  toast.setAttribute("role", "alert");
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+function isSubmitControl(target) {
+  const control = target.closest('button, input[type="submit"]');
+  // Read the attribute, not `control.type`: buttons with no type report "submit".
+  return Boolean(control) && (control.getAttribute("type") === "submit" || /submit review/i.test(control.textContent));
+}
+
+// GitHub's classic form pre-selects "Comment". With it hidden, submitting
+// would silently post a comment-only review, so stop and ask for a choice.
+function guardHiddenCommentSubmit(event) {
+  const scope = event.target instanceof Element && event.target.closest('form, [role="dialog"]');
+  const isSubmitAttempt = event.type === "submit" || (event.target instanceof Element && isSubmitControl(event.target));
+  const hiddenCommentChosen =
+    Boolean(scope) && Boolean(scope.querySelector("input[data-grc-comment-option]:checked"));
+
+  if (settings.hideCommentOption && isSubmitAttempt && hiddenCommentChosen) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    showToast("Choose “Approve” or “Request changes” before submitting your review.");
+  }
+}
+
+document.addEventListener("click", guardHiddenCommentSubmit, true);
+document.addEventListener("submit", guardHiddenCommentSubmit, true);
+
+chrome.storage.sync.get(SETTINGS_DEFAULTS, (stored) => {
+  settings = stored;
+  applyCommentVisibility();
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes.hideCommentOption) {
+    settings = { ...settings, hideCommentOption: changes.hideCommentOption.newValue };
+    applyCommentVisibility();
+  }
+});
+
 let scheduled = false;
 
 function scheduleApply() {
@@ -117,6 +206,7 @@ function scheduleApply() {
     requestAnimationFrame(() => {
       scheduled = false;
       softenRequestChangesIcons();
+      applyCommentVisibility();
     });
   }
 }
