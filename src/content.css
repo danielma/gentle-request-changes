@@ -5,21 +5,26 @@
   --grc-on-blue: var(--fgColor-onEmphasis, #ffffff);
 }
 
-svg[data-grc-icon] {
+/*
+ * Chrome cascades content-script CSS *before* the page's own stylesheets, so
+ * when GitHub's utility classes (e.g. `.color-bg-danger-emphasis`) also use
+ * !important, a tie in specificity goes to GitHub. Each attribute selector is
+ * doubled to win that tie outright.
+ */
+svg[data-grc-icon][data-grc-icon] {
   color: var(--grc-blue) !important;
   fill: currentColor !important;
 }
 
-[data-grc-badge] {
+[data-grc-badge][data-grc-badge] {
   background-color: var(--grc-blue-emphasis) !important;
-  border-color: transparent !important;
 }
 
-[data-grc-badge] svg[data-grc-icon] {
+[data-grc-badge][data-grc-badge] svg[data-grc-icon][data-grc-icon] {
   color: var(--grc-on-blue) !important;
 }
 
-[data-grc-hidden] {
+[data-grc-hidden][data-grc-hidden] {
   display: none !important;
 }
 
