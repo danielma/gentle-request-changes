@@ -1,0 +1,144 @@
+<!doctype html>
+<!--
+  Manual QA page: open this file directly in Chrome (no extension needed).
+  It stubs chrome.storage, loads the real content script and stylesheet, and
+  mimics each piece of GitHub markup the extension touches.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Gentle Request Changes fixture</title>
+    <link rel="stylesheet" href="../src/content.css" />
+    <style>
+      body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 24px; max-width: 720px; }
+      section { border: 1px solid #d1d9e0; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; }
+      h2 { font-size: 13px; text-transform: uppercase; color: #59636e; margin: 0 0 8px; }
+      .expect { color: #59636e; font-size: 12px; }
+      .row { display: flex; gap: 8px; align-items: center; }
+      .color-fg-danger { color: #d1242f; }
+      .color-bg-danger-emphasis { background: #cf222e; }
+      .color-fg-on-emphasis { color: #fff; }
+      .TimelineItem-badge { display: inline-flex; width: 32px; height: 32px; border-radius: 50%; align-items: center; justify-content: center; }
+      .octicon { fill: currentColor; }
+      #controls { position: sticky; top: 0; background: #ddf4ff; padding: 8px 12px; border-radius: 6px; margin-bottom: 16px; }
+    </style>
+    <script>
+      // Minimal chrome.storage stand-in so the content script runs outside an extension.
+      (() => {
+        const store = { hideCommentOption: false };
+        const listeners = [];
+        window.chrome = {
+          storage: {
+            sync: {
+              get: (defaults, callback) => callback({ ...defaults, ...store }),
+              set: (values) => {
+                const changes = {};
+                Object.entries(values).forEach(([key, newValue]) => {
+                  changes[key] = { oldValue: store[key], newValue };
+                  store[key] = newValue;
+                });
+                listeners.forEach((listener) => listener(changes, "sync"));
+              },
+            },
+            onChanged: { addListener: (listener) => listeners.push(listener) },
+          },
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="controls">
+      <label>
+        <input type="checkbox" onchange="chrome.storage.sync.set({ hideCommentOption: this.checked })" />
+        Hide the “Comment” option (same as the popup checkbox)
+      </label>
+    </div>
+
+    <section>
+      <h2>Timeline review badge</h2>
+      <div class="TimelineItem">
+        <div class="row">
+          <div class="TimelineItem-badge color-bg-danger-emphasis color-fg-on-emphasis">
+            <svg class="octicon octicon-file-diff" viewBox="0 0 16 16" width="16" height="16"><path d="M1 1.75C1 .784 1.784 0 2.75 0h7.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H2.75A1.75 1.75 0 0 1 1 14.25Zm7 1.5a.75.75 0 0 0-1.5 0V5H5a.75.75 0 0 0 0 1.5h1.5V8a.75.75 0 0 0 1.5 0V6.5h1.5a.75.75 0 0 0 0-1.5H8ZM5.25 10.5a.75.75 0 0 0 0 1.5h5.5a.75.75 0 0 0 0-1.5Z"></path></svg>
+          </div>
+          <span><strong>octocat</strong> requested changes 2 days ago</span>
+        </div>
+      </div>
+      <p class="expect">Expect: blue circle with a white lightbulb.</p>
+    </section>
+
+    <section>
+      <h2>Reviewers sidebar</h2>
+      <div class="row">
+        <span>octocat</span>
+        <span class="reviewers-status-icon">
+          <svg class="octicon octicon-file-diff color-fg-danger" viewBox="0 0 16 16" width="16" height="16"><path d="M1 1.75C1 .784 1.784 0 2.75 0h7.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16H2.75A1.75 1.75 0 0 1 1 14.25Z"></path></svg>
+        </span>
+      </div>
+      <p class="expect">Expect: blue lightbulb.</p>
+    </section>
+
+    <section>
+      <h2>Merge box</h2>
+      <div class="merge-box">
+        <div class="row">
+          <svg class="octicon octicon-x-circle-fill color-fg-danger" viewBox="0 0 16 16" width="16" height="16"><path d="M2.344 2.343h-.001a8 8 0 0 1 11.314 11.314A8.002 8.002 0 0 1 .234 10.089a8 8 0 0 1 2.11-7.746Zm1.06 10.253a6.5 6.5 0 1 0 9.108-9.275 6.5 6.5 0 0 0-9.108 9.275ZM6.03 4.97 8 6.94l1.97-1.97a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l1.97 1.97a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-1.97 1.97a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734L6.94 8 4.97 6.03a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018Z"></path></svg>
+          <div><strong>Changes requested</strong><div>1 review requesting changes by reviewers with write access.</div></div>
+        </div>
+        <div class="row">
+          <svg class="octicon octicon-x color-fg-danger" viewBox="0 0 16 16" width="16" height="16"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path></svg>
+          <span>CI / test (pull_request) — Failing after 2m</span>
+        </div>
+        <div class="row">
+          <span>Some checks were not successful. Merging is blocked: changes must be addressed and required status checks must pass before this pull request can be merged into the main branch.</span>
+        </div>
+      </div>
+      <p class="expect">Expect: “Changes requested” icon becomes a blue lightbulb; the failing CI X stays red.</p>
+    </section>
+
+    <section>
+      <h2>Classic review form</h2>
+      <form id="classic-form" onsubmit="event.preventDefault(); document.getElementById('classic-result').textContent = 'Submitted: ' + new FormData(this).get('pull_request_review[event]')">
+        <div class="form-checkbox">
+          <label><input type="radio" name="pull_request_review[event]" value="comment" checked /> Comment</label>
+          <p class="note">Submit general feedback without explicit approval.</p>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="pull_request_review[event]" value="approve" /> Approve</label>
+          <p class="note">Give your approval to merge these changes.</p>
+        </div>
+        <div class="form-checkbox">
+          <label><input type="radio" name="pull_request_review[event]" value="reject" /> Request changes</label>
+          <p class="note">Submit feedback that must be addressed before merging.</p>
+        </div>
+        <button type="button">Cancel (must never be blocked)</button>
+        <button type="submit">Submit review</button>
+        <span id="classic-result"></span>
+      </form>
+      <p class="expect">Expect with “hide” on: Comment disappears; submitting while it is still selected shows a blue toast and does not submit.</p>
+    </section>
+
+    <section>
+      <h2>Dialog review form (labels only, no form element)</h2>
+      <div role="dialog" aria-label="Submit review">
+        <div role="radiogroup">
+          <div><label><input type="radio" name="review-event" /> Comment</label></div>
+          <div><label><input type="radio" name="review-event" /> Approve</label></div>
+          <div><label><input type="radio" name="review-event" /> Request changes</label></div>
+        </div>
+        <button type="button" onclick="document.getElementById('dialog-result').textContent = 'Submitted'">Submit review</button>
+        <span id="dialog-result"></span>
+      </div>
+      <p class="expect">Expect with “hide” on: Comment disappears.</p>
+    </section>
+
+    <section>
+      <h2>Unrelated radios</h2>
+      <label><input type="radio" name="sort" value="comment" /> Comment</label>
+      <label><input type="radio" name="sort" value="date" /> Date</label>
+      <p class="expect">Expect: never hidden (not a review form).</p>
+    </section>
+
+    <script src="../src/content.js"></script>
+  </body>
+</html>
